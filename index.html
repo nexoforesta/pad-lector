@@ -2,144 +2,160 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+
   <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no">
 
   <title>PAD - Lector QR</title>
 
+  <!-- MOTOR QR -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      padding: 0;
+      background: #eef1f5;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f2f4f7;
       color: #1f2937;
       text-align: center;
     }
 
     header {
-      background: #163a63;
+      background: #153b66;
       color: white;
-      padding: 18px 12px;
+      padding: 16px 10px;
     }
 
     header h1 {
       margin: 0;
-      font-size: 28px;
+      font-size: 30px;
     }
 
     header p {
-      margin: 6px 0 0;
+      margin: 5px 0 0;
       font-size: 16px;
     }
 
     .contenedor {
-      max-width: 650px;
-      margin: 20px auto;
-      padding: 0 15px;
+      width: 100%;
+      max-width: 700px;
+      margin: auto;
+      padding: 15px;
     }
 
-    .tarjeta {
+    .panel {
       background: white;
       border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+      padding: 15px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.12);
     }
 
     #estado {
-      font-size: 22px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      padding: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
       border-radius: 10px;
+      font-size: 21px;
+      font-weight: bold;
       background: #e5e7eb;
     }
 
     #reader {
       width: 100%;
-      overflow: hidden;
-      border-radius: 14px;
+      min-height: 320px;
       background: #111;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    #reader video {
+      width: 100% !important;
+      height: auto !important;
+      object-fit: cover !important;
     }
 
     #resultado {
-      margin-top: 18px;
-      min-height: 100px;
-      padding: 18px;
-      border-radius: 12px;
+      margin-top: 14px;
+      padding: 15px;
+      min-height: 90px;
+      border-radius: 10px;
       background: #eef2f7;
     }
 
-    #resultado .titulo {
-      font-size: 18px;
-    }
-
-    #idDetectado {
+    #codigo {
       display: block;
       margin-top: 8px;
-      font-size: 34px;
+      font-size: 32px;
       font-weight: bold;
-      color: #163a63;
+      color: #153b66;
       word-break: break-word;
     }
 
     button {
       width: 100%;
-      margin-top: 18px;
+      margin-top: 15px;
       padding: 17px;
-      border: none;
-      border-radius: 12px;
+      border: 0;
+      border-radius: 11px;
       font-size: 20px;
       font-weight: bold;
       cursor: pointer;
     }
 
-    #btnIniciar {
+    #iniciar {
       background: #167647;
       color: white;
     }
 
-    #btnIniciar:disabled {
-      opacity: 0.55;
-      cursor: default;
-    }
-
-    #mensajeError {
+    #detener {
+      background: #6b7280;
+      color: white;
       display: none;
+    }
+
+    .diagnostico {
       margin-top: 15px;
-      padding: 14px;
+      padding: 12px;
+      background: #f3f4f6;
       border-radius: 10px;
-      background: #fee2e2;
-      color: #991b1b;
-      font-weight: bold;
-    }
-
-    .pie {
-      margin-top: 18px;
-      color: #6b7280;
+      text-align: left;
       font-size: 14px;
+      line-height: 1.6;
     }
 
-    .exito {
+    .verde {
       background: #dcfce7 !important;
       color: #166534 !important;
     }
 
-    .esperando {
+    .azul {
       background: #dbeafe !important;
       color: #1e40af !important;
     }
 
-    .bloqueado {
+    .amarillo {
       background: #fef3c7 !important;
       color: #92400e !important;
     }
+
+    .rojo {
+      background: #fee2e2 !important;
+      color: #991b1b !important;
+    }
+
+    .pie {
+      margin-top: 15px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
   </style>
 </head>
 
@@ -150,259 +166,508 @@
   <p>Proyecto Asistencia Docente</p>
 </header>
 
+
 <div class="contenedor">
 
-  <div class="tarjeta">
+  <div class="panel">
 
     <div id="estado">
       LECTOR DETENIDO
     </div>
 
+
     <div id="reader"></div>
 
+
     <div id="resultado">
-      <div class="titulo">
-        Presione <strong>INICIAR LECTOR</strong>
-      </div>
-      <span id="idDetectado">---</span>
+
+      Acerque un código QR a la cámara.
+
+      <span id="codigo">
+        ---
+      </span>
+
     </div>
 
-    <button id="btnIniciar" onclick="iniciarLector()">
-      📷 INICIAR LECTOR
+
+    <button id="iniciar">
+      📷 INICIAR CÁMARA
     </button>
 
-    <div id="mensajeError"></div>
+
+    <button id="detener">
+      ⏹ DETENER CÁMARA
+    </button>
+
+
+    <div class="diagnostico">
+
+      <strong>DIAGNÓSTICO PAD</strong><br>
+
+      Estado:
+      <span id="diagEstado">
+        esperando
+      </span>
+      <br>
+
+      Lecturas correctas:
+      <span id="contador">
+        0
+      </span>
+      <br>
+
+      Último QR:
+      <span id="ultimo">
+        ninguno
+      </span>
+      <br>
+
+      Motor:
+      html5-qrcode 2.3.8
+
+    </div>
+
 
     <div class="pie">
-      PAD – Prueba de cámara y lectura QR<br>
+
+      PAD – PRUEBA DE LECTOR<br>
+
       Esta versión NO registra asistencia.
+
     </div>
 
   </div>
 
 </div>
 
+
 <script>
 
-  let lector = null;
-  let bloqueado = false;
-  let iniciado = false;
+let lector = null;
 
-  const estado = document.getElementById("estado");
-  const resultado = document.getElementById("resultado");
-  const idDetectado = document.getElementById("idDetectado");
-  const boton = document.getElementById("btnIniciar");
-  const mensajeError = document.getElementById("mensajeError");
+let funcionando = false;
+
+let bloqueado = false;
+
+let cantidadLecturas = 0;
 
 
-  async function iniciarLector() {
+const estado =
+  document.getElementById("estado");
 
-    if (iniciado) {
-      return;
-    }
+const codigo =
+  document.getElementById("codigo");
 
-    mensajeError.style.display = "none";
+const resultado =
+  document.getElementById("resultado");
 
-    estado.textContent = "ABRIENDO CÁMARA...";
-    estado.className = "bloqueado";
+const btnIniciar =
+  document.getElementById("iniciar");
 
-    boton.disabled = true;
+const btnDetener =
+  document.getElementById("detener");
 
-    try {
+const diagEstado =
+  document.getElementById("diagEstado");
 
-      lector = new Html5Qrcode("reader");
+const contador =
+  document.getElementById("contador");
 
-      const configuracion = {
-        fps: 10,
+const ultimo =
+  document.getElementById("ultimo");
 
-        qrbox: function(viewfinderWidth, viewfinderHeight) {
 
-          const lado = Math.floor(
-            Math.min(viewfinderWidth, viewfinderHeight) * 0.70
+btnIniciar.addEventListener(
+  "click",
+  iniciarCamara
+);
+
+
+btnDetener.addEventListener(
+  "click",
+  detenerCamara
+);
+
+
+
+async function iniciarCamara() {
+
+  if (funcionando) {
+    return;
+  }
+
+  estado.textContent =
+    "SOLICITANDO CÁMARA...";
+
+  estado.className =
+    "amarillo";
+
+  diagEstado.textContent =
+    "solicitando permiso";
+
+
+  try {
+
+    lector =
+      new Html5Qrcode("reader");
+
+
+    const configuracion = {
+
+      fps: 15,
+
+      qrbox: function(
+        viewfinderWidth,
+        viewfinderHeight
+      ) {
+
+        const ancho =
+          Math.floor(
+            viewfinderWidth * 0.85
           );
 
-          return {
-            width: lado,
-            height: lado
-          };
-        },
+        const alto =
+          Math.floor(
+            viewfinderHeight * 0.75
+          );
 
-        aspectRatio: 1.0
-      };
+        return {
+          width: ancho,
+          height: alto
+        };
 
-      await lector.start(
-        {
-          facingMode: "environment"
-        },
-        configuracion,
-        qrLeido,
-        function() {
-          // Los intentos sin QR no se muestran.
-        }
-      );
+      },
 
-      iniciado = true;
+      aspectRatio: 1.333333,
 
-      estado.textContent = "🟢 CÁMARA ACTIVA – ACERQUE SU QR";
-      estado.className = "esperando";
+      disableFlip: false,
 
-      resultado.className = "";
-      resultado.innerHTML =
-        '<div class="titulo">Esperando código QR...</div>' +
-        '<span id="idDetectado">---</span>';
-
-    }
-    catch (error) {
-
-      console.error(error);
-
-      iniciado = false;
-      boton.disabled = false;
-
-      estado.textContent = "NO SE PUDO ABRIR LA CÁMARA";
-      estado.className = "";
-
-      mensajeError.style.display = "block";
-      mensajeError.innerHTML =
-        "Error de cámara:<br>" +
-        escaparHTML(error && error.message
-          ? error.message
-          : String(error));
-
-    }
-  }
-
-
-  function qrLeido(textoQR) {
-
-    if (bloqueado) {
-      return;
-    }
-
-    bloqueado = true;
-
-    const id = extraerIdPAD(textoQR);
-
-    reproducirBeep();
-
-    estado.textContent = "✅ QR DETECTADO";
-    estado.className = "exito";
-
-    resultado.className = "exito";
-
-    resultado.innerHTML =
-      '<div class="titulo">ID PAD DETECTADO</div>' +
-      '<span id="idDetectado">' +
-      escaparHTML(id) +
-      '</span>';
-
-    if (navigator.vibrate) {
-      navigator.vibrate(120);
-    }
-
-    setTimeout(function() {
-
-      estado.textContent =
-        "🟢 CÁMARA ACTIVA – ACERQUE EL SIGUIENTE QR";
-
-      estado.className = "esperando";
-
-      resultado.className = "";
-
-      resultado.innerHTML =
-        '<div class="titulo">Esperando código QR...</div>' +
-        '<span id="idDetectado">---</span>';
-
-      bloqueado = false;
-
-    }, 2500);
-  }
-
-
-  function extraerIdPAD(texto) {
-
-    let valor = String(texto || "").trim();
-
-    /*
-      Si el QR contiene una dirección como:
-
-      https://.../exec?id=MAM345
-
-      extraemos solamente MAM345.
-    */
-
-    try {
-
-      const url = new URL(valor);
-
-      const idURL = url.searchParams.get("id");
-
-      if (idURL) {
-        return idURL.trim().toUpperCase();
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true
       }
 
-    }
-    catch (e) {
-      // No era una URL.
-    }
+    };
 
-    /*
-      Si el QR contiene directamente:
-      MAM345
-      devolvemos ese valor.
-    */
 
-    return valor.toUpperCase();
+    const camara = {
+
+      facingMode: {
+        ideal: "environment"
+      },
+
+      width: {
+        ideal: 1280
+      },
+
+      height: {
+        ideal: 720
+      }
+
+    };
+
+
+    await lector.start(
+
+      camara,
+
+      configuracion,
+
+      qrDetectado,
+
+      qrNoDetectado
+
+    );
+
+
+    funcionando = true;
+
+
+    estado.textContent =
+      "🟢 CÁMARA ACTIVA – ACERQUE EL QR";
+
+    estado.className =
+      "azul";
+
+
+    diagEstado.textContent =
+      "cámara activa / buscando QR";
+
+
+    btnIniciar.style.display =
+      "none";
+
+    btnDetener.style.display =
+      "block";
+
+
+  }
+  catch(error) {
+
+    console.error(error);
+
+    funcionando = false;
+
+
+    estado.textContent =
+      "ERROR DE CÁMARA";
+
+    estado.className =
+      "rojo";
+
+
+    diagEstado.textContent =
+      error && error.message
+      ? error.message
+      : String(error);
+
+  }
+
+}
+
+
+
+function qrNoDetectado(error) {
+
+  /*
+    Es normal que esta función se ejecute
+    continuamente mientras no haya
+    un QR delante de la cámara.
+
+    No reproducimos sonidos aquí.
+  */
+
+}
+
+
+
+function qrDetectado(
+  textoDecodificado,
+  resultadoDecodificado
+) {
+
+  if (bloqueado) {
+    return;
   }
 
 
-  function reproducirBeep() {
+  bloqueado = true;
 
-    try {
 
-      const AudioContext =
-        window.AudioContext ||
-        window.webkitAudioContext;
+  cantidadLecturas++;
 
-      const contexto = new AudioContext();
+  contador.textContent =
+    cantidadLecturas;
 
-      const oscilador = contexto.createOscillator();
-      const ganancia = contexto.createGain();
 
-      oscilador.connect(ganancia);
-      ganancia.connect(contexto.destination);
+  const texto =
+    String(textoDecodificado).trim();
 
-      oscilador.frequency.value = 880;
 
-      ganancia.gain.setValueAtTime(
-        0.20,
-        contexto.currentTime
-      );
+  ultimo.textContent =
+    texto;
 
-      ganancia.gain.exponentialRampToValueAtTime(
-        0.01,
-        contexto.currentTime + 0.15
-      );
 
-      oscilador.start(contexto.currentTime);
-      oscilador.stop(contexto.currentTime + 0.15);
+  const idPAD =
+    obtenerIdPAD(texto);
 
-    }
-    catch (e) {
-      console.log("Audio no disponible");
-    }
+
+  codigo.textContent =
+    idPAD;
+
+
+  resultado.className =
+    "verde";
+
+
+  estado.textContent =
+    "✅ QR DETECTADO";
+
+  estado.className =
+    "verde";
+
+
+  diagEstado.textContent =
+    "QR leído correctamente";
+
+
+  beep();
+
+
+  if (navigator.vibrate) {
+
+    navigator.vibrate(150);
+
   }
 
 
-  function escaparHTML(texto) {
+  setTimeout(function() {
 
-    return String(texto)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    resultado.className = "";
+
+
+    codigo.textContent =
+      "---";
+
+
+    estado.textContent =
+      "🟢 CÁMARA ACTIVA – ACERQUE EL SIGUIENTE QR";
+
+    estado.className =
+      "azul";
+
+
+    diagEstado.textContent =
+      "cámara activa / buscando QR";
+
+
+    bloqueado = false;
+
+  }, 2500);
+
+}
+
+
+
+function obtenerIdPAD(texto) {
+
+  try {
+
+    const direccion =
+      new URL(texto);
+
+
+    const id =
+      direccion.searchParams.get("id");
+
+
+    if (id) {
+
+      return id
+        .trim()
+        .toUpperCase();
+
+    }
+
   }
+  catch(error) {
+
+    // El QR puede contener
+    // directamente el ID PAD.
+
+  }
+
+
+  return texto.toUpperCase();
+
+}
+
+
+
+function beep() {
+
+  try {
+
+    const AudioContext =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+
+    const audio =
+      new AudioContext();
+
+
+    const oscilador =
+      audio.createOscillator();
+
+
+    const volumen =
+      audio.createGain();
+
+
+    oscilador.connect(volumen);
+
+    volumen.connect(
+      audio.destination
+    );
+
+
+    oscilador.frequency.value =
+      950;
+
+
+    volumen.gain.setValueAtTime(
+      0.25,
+      audio.currentTime
+    );
+
+
+    volumen.gain.exponentialRampToValueAtTime(
+      0.01,
+      audio.currentTime + 0.18
+    );
+
+
+    oscilador.start();
+
+
+    oscilador.stop(
+      audio.currentTime + 0.18
+    );
+
+  }
+  catch(error) {
+
+    console.log(
+      "Audio no disponible"
+    );
+
+  }
+
+}
+
+
+
+async function detenerCamara() {
+
+  if (!lector || !funcionando) {
+    return;
+  }
+
+
+  try {
+
+    await lector.stop();
+
+    await lector.clear();
+
+  }
+  catch(error) {
+
+    console.error(error);
+
+  }
+
+
+  funcionando = false;
+
+
+  estado.textContent =
+    "LECTOR DETENIDO";
+
+  estado.className = "";
+
+
+  diagEstado.textContent =
+    "detenido";
+
+
+  btnIniciar.style.display =
+    "block";
+
+  btnDetener.style.display =
+    "none";
+
+}
 
 </script>
 
