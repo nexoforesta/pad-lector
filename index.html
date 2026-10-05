@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <title>PAD - Lector QR</title>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f2f4f7;
+      color: #1f2937;
+      text-align: center;
+    }
+
+    header {
+      background: #163a63;
+      color: white;
+      padding: 18px 12px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      font-size: 16px;
+    }
+
+    .contenedor {
+      max-width: 650px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+
+    .tarjeta {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+    }
+
+    #estado {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #e5e7eb;
+    }
+
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #111;
+    }
+
+    #resultado {
+      margin-top: 18px;
+      min-height: 100px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #eef2f7;
+    }
+
+    #resultado .titulo {
+      font-size: 18px;
+    }
+
+    #idDetectado {
+      display: block;
+      margin-top: 8px;
+      font-size: 34px;
+      font-weight: bold;
+      color: #163a63;
+      word-break: break-word;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 17px;
+      border: none;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #btnIniciar {
+      background: #167647;
+      color: white;
+    }
+
+    #btnIniciar:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    #mensajeError {
+      display: none;
+      margin-top: 15px;
+      padding: 14px;
+      border-radius: 10px;
+      background: #fee2e2;
+      color: #991b1b;
+      font-weight: bold;
+    }
+
+    .pie {
+      margin-top: 18px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .exito {
+      background: #dcfce7 !important;
+      color: #166534 !important;
+    }
+
+    .esperando {
+      background: #dbeafe !important;
+      color: #1e40af !important;
+    }
+
+    .bloqueado {
+      background: #fef3c7 !important;
+      color: #92400e !important;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>PAD</h1>
+  <p>Proyecto Asistencia Docente</p>
+</header>
+
+<div class="contenedor">
+
+  <div class="tarjeta">
+
+    <div id="estado">
+      LECTOR DETENIDO
+    </div>
+
+    <div id="reader"></div>
+
+    <div id="resultado">
+      <div class="titulo">
+        Presione <strong>INICIAR LECTOR</strong>
+      </div>
+      <span id="idDetectado">---</span>
+    </div>
+
+    <button id="btnIniciar" onclick="iniciarLector()">
+      📷 INICIAR LECTOR
+    </button>
+
+    <div id="mensajeError"></div>
+
+    <div class="pie">
+      PAD – Prueba de cámara y lectura QR<br>
+      Esta versión NO registra asistencia.
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+  let lector = null;
+  let bloqueado = false;
+  let iniciado = false;
+
+  const estado = document.getElementById("estado");
+  const resultado = document.getElementById("resultado");
+  const idDetectado = document.getElementById("idDetectado");
+  const boton = document.getElementById("btnIniciar");
+  const mensajeError = document.getElementById("mensajeError");
+
+
+  async function iniciarLector() {
+
+    if (iniciado) {
+      return;
+    }
+
+    mensajeError.style.display = "none";
+
+    estado.textContent = "ABRIENDO CÁMARA...";
+    estado.className = "bloqueado";
+
+    boton.disabled = true;
+
+    try {
+
+      lector = new Html5Qrcode("reader");
+
+      const configuracion = {
+        fps: 10,
+
+        qrbox: function(viewfinderWidth, viewfinderHeight) {
+
+          const lado = Math.floor(
+            Math.min(viewfinderWidth, viewfinderHeight) * 0.70
+          );
+
+          return {
+            width: lado,
+            height: lado
+          };
+        },
+
+        aspectRatio: 1.0
+      };
+
+      await lector.start(
+        {
+          facingMode: "environment"
+        },
+        configuracion,
+        qrLeido,
+        function() {
+          // Los intentos sin QR no se muestran.
+        }
+      );
+
+      iniciado = true;
+
+      estado.textContent = "🟢 CÁMARA ACTIVA – ACERQUE SU QR";
+      estado.className = "esperando";
+
+      resultado.className = "";
+      resultado.innerHTML =
+        '<div class="titulo">Esperando código QR...</div>' +
+        '<span id="idDetectado">---</span>';
+
+    }
+    catch (error) {
+
+      console.error(error);
+
+      iniciado = false;
+      boton.disabled = false;
+
+      estado.textContent = "NO SE PUDO ABRIR LA CÁMARA";
+      estado.className = "";
+
+      mensajeError.style.display = "block";
+      mensajeError.innerHTML =
+        "Error de cámara:<br>" +
+        escaparHTML(error && error.message
+          ? error.message
+          : String(error));
+
+    }
+  }
+
+
+  function qrLeido(textoQR) {
+
+    if (bloqueado) {
+      return;
+    }
+
+    bloqueado = true;
+
+    const id = extraerIdPAD(textoQR);
+
+    reproducirBeep();
+
+    estado.textContent = "✅ QR DETECTADO";
+    estado.className = "exito";
+
+    resultado.className = "exito";
+
+    resultado.innerHTML =
+      '<div class="titulo">ID PAD DETECTADO</div>' +
+      '<span id="idDetectado">' +
+      escaparHTML(id) +
+      '</span>';
+
+    if (navigator.vibrate) {
+      navigator.vibrate(120);
+    }
+
+    setTimeout(function() {
+
+      estado.textContent =
+        "🟢 CÁMARA ACTIVA – ACERQUE EL SIGUIENTE QR";
+
+      estado.className = "esperando";
+
+      resultado.className = "";
+
+      resultado.innerHTML =
+        '<div class="titulo">Esperando código QR...</div>' +
+        '<span id="idDetectado">---</span>';
+
+      bloqueado = false;
+
+    }, 2500);
+  }
+
+
+  function extraerIdPAD(texto) {
+
+    let valor = String(texto || "").trim();
+
+    /*
+      Si el QR contiene una dirección como:
+
+      https://.../exec?id=MAM345
+
+      extraemos solamente MAM345.
+    */
+
+    try {
+
+      const url = new URL(valor);
+
+      const idURL = url.searchParams.get("id");
+
+      if (idURL) {
+        return idURL.trim().toUpperCase();
+      }
+
+    }
+    catch (e) {
+      // No era una URL.
+    }
+
+    /*
+      Si el QR contiene directamente:
+      MAM345
+      devolvemos ese valor.
+    */
+
+    return valor.toUpperCase();
+  }
+
+
+  function reproducirBeep() {
+
+    try {
+
+      const AudioContext =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+      const contexto = new AudioContext();
+
+      const oscilador = contexto.createOscillator();
+      const ganancia = contexto.createGain();
+
+      oscilador.connect(ganancia);
+      ganancia.connect(contexto.destination);
+
+      oscilador.frequency.value = 880;
+
+      ganancia.gain.setValueAtTime(
+        0.20,
+        contexto.currentTime
+      );
+
+      ganancia.gain.exponentialRampToValueAtTime(
+        0.01,
+        contexto.currentTime + 0.15
+      );
+
+      oscilador.start(contexto.currentTime);
+      oscilador.stop(contexto.currentTime + 0.15);
+
+    }
+    catch (e) {
+      console.log("Audio no disponible");
+    }
+  }
+
+
+  function escaparHTML(texto) {
+
+    return String(texto)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+</script>
+
+</body>
+</html>
