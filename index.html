@@ -9,29 +9,27 @@
                  maximum-scale=1.0,
                  user-scalable=no">
 
-  <title>PAD - Lector QR</title>
+  <title>PAD - Lector QR V3</title>
 
-  <!-- MOTOR QR -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      background: #eef1f5;
       font-family: Arial, Helvetica, sans-serif;
+      background: #eef1f5;
       color: #1f2937;
       text-align: center;
     }
 
     header {
-      background: #153b66;
+      background: #163a63;
       color: white;
-      padding: 16px 10px;
+      padding: 16px;
     }
 
     header h1 {
@@ -53,8 +51,8 @@
 
     .panel {
       background: white;
-      border-radius: 16px;
       padding: 15px;
+      border-radius: 16px;
       box-shadow: 0 3px 12px rgba(0,0,0,.12);
     }
 
@@ -69,24 +67,17 @@
 
     #reader {
       width: 100%;
-      min-height: 320px;
       background: #111;
       border-radius: 14px;
       overflow: hidden;
     }
 
-    #reader video {
-      width: 100% !important;
-      height: auto !important;
-      object-fit: cover !important;
-    }
-
     #resultado {
       margin-top: 14px;
-      padding: 15px;
-      min-height: 90px;
-      border-radius: 10px;
+      padding: 16px;
+      min-height: 95px;
       background: #eef2f7;
+      border-radius: 10px;
     }
 
     #codigo {
@@ -94,7 +85,7 @@
       margin-top: 8px;
       font-size: 32px;
       font-weight: bold;
-      color: #153b66;
+      color: #163a63;
       word-break: break-word;
     }
 
@@ -106,38 +97,37 @@
       border-radius: 11px;
       font-size: 20px;
       font-weight: bold;
-      cursor: pointer;
     }
 
-    #iniciar {
+    #btnIniciar {
       background: #167647;
       color: white;
     }
 
-    #detener {
+    #btnDetener {
+      display: none;
       background: #6b7280;
       color: white;
-      display: none;
     }
 
     .diagnostico {
       margin-top: 15px;
-      padding: 12px;
-      background: #f3f4f6;
+      padding: 13px;
       border-radius: 10px;
+      background: #f3f4f6;
       text-align: left;
+      line-height: 1.7;
       font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .verde {
-      background: #dcfce7 !important;
-      color: #166534 !important;
     }
 
     .azul {
       background: #dbeafe !important;
       color: #1e40af !important;
+    }
+
+    .verde {
+      background: #dcfce7 !important;
+      color: #166534 !important;
     }
 
     .amarillo {
@@ -152,10 +142,9 @@
 
     .pie {
       margin-top: 15px;
-      font-size: 13px;
       color: #6b7280;
+      font-size: 13px;
     }
-
   </style>
 </head>
 
@@ -166,7 +155,6 @@
   <p>Proyecto Asistencia Docente</p>
 </header>
 
-
 <div class="contenedor">
 
   <div class="panel">
@@ -175,38 +163,28 @@
       LECTOR DETENIDO
     </div>
 
-
     <div id="reader"></div>
 
-
     <div id="resultado">
-
       Acerque un código QR a la cámara.
-
-      <span id="codigo">
-        ---
-      </span>
-
+      <span id="codigo">---</span>
     </div>
 
-
-    <button id="iniciar">
-      📷 INICIAR CÁMARA
+    <button id="btnIniciar">
+      📷 INICIAR LECTOR
     </button>
 
-
-    <button id="detener">
-      ⏹ DETENER CÁMARA
+    <button id="btnDetener">
+      ⏹ DETENER LECTOR
     </button>
-
 
     <div class="diagnostico">
 
-      <strong>DIAGNÓSTICO PAD</strong><br>
+      <strong>DIAGNÓSTICO PAD V3</strong><br>
 
-      Estado:
-      <span id="diagEstado">
-        esperando
+      Cámara:
+      <span id="diagCamara">
+        detenida
       </span>
       <br>
 
@@ -216,458 +194,374 @@
       </span>
       <br>
 
-      Último QR:
-      <span id="ultimo">
-        ninguno
+      Última lectura:
+      <span id="ultimaLectura">
+        ninguna
       </span>
-      <br>
-
-      Motor:
-      html5-qrcode 2.3.8
 
     </div>
 
-
     <div class="pie">
-
-      PAD – PRUEBA DE LECTOR<br>
-
-      Esta versión NO registra asistencia.
-
+      PAD – PRUEBA DE LECTOR V3<br>
+      No registra asistencia.
     </div>
 
   </div>
 
 </div>
 
-
 <script>
 
-let lector = null;
+  let lector = null;
+  let funcionando = false;
+  let bloqueado = false;
+  let cantidad = 0;
 
-let funcionando = false;
+  const estado =
+    document.getElementById("estado");
 
-let bloqueado = false;
+  const codigo =
+    document.getElementById("codigo");
 
-let cantidadLecturas = 0;
+  const resultado =
+    document.getElementById("resultado");
 
+  const btnIniciar =
+    document.getElementById("btnIniciar");
 
-const estado =
-  document.getElementById("estado");
+  const btnDetener =
+    document.getElementById("btnDetener");
 
-const codigo =
-  document.getElementById("codigo");
+  const diagCamara =
+    document.getElementById("diagCamara");
 
-const resultado =
-  document.getElementById("resultado");
+  const contador =
+    document.getElementById("contador");
 
-const btnIniciar =
-  document.getElementById("iniciar");
-
-const btnDetener =
-  document.getElementById("detener");
-
-const diagEstado =
-  document.getElementById("diagEstado");
-
-const contador =
-  document.getElementById("contador");
-
-const ultimo =
-  document.getElementById("ultimo");
+  const ultimaLectura =
+    document.getElementById("ultimaLectura");
 
 
-btnIniciar.addEventListener(
-  "click",
-  iniciarCamara
-);
+  btnIniciar.addEventListener(
+    "click",
+    iniciarLector
+  );
+
+  btnDetener.addEventListener(
+    "click",
+    detenerLector
+  );
 
 
-btnDetener.addEventListener(
-  "click",
-  detenerCamara
-);
+  async function iniciarLector() {
 
+    if (funcionando) {
+      return;
+    }
 
-
-async function iniciarCamara() {
-
-  if (funcionando) {
-    return;
-  }
-
-  estado.textContent =
-    "SOLICITANDO CÁMARA...";
-
-  estado.className =
-    "amarillo";
-
-  diagEstado.textContent =
-    "solicitando permiso";
-
-
-  try {
-
-    lector =
-      new Html5Qrcode("reader");
-
-
-    const configuracion = {
-
-      fps: 15,
-
-      qrbox: function(
-        viewfinderWidth,
-        viewfinderHeight
-      ) {
-
-        const ancho =
-          Math.floor(
-            viewfinderWidth * 0.85
-          );
-
-        const alto =
-          Math.floor(
-            viewfinderHeight * 0.75
-          );
-
-        return {
-          width: ancho,
-          height: alto
-        };
-
-      },
-
-      aspectRatio: 1.333333,
-
-      disableFlip: false,
-
-      experimentalFeatures: {
-        useBarCodeDetectorIfSupported: true
-      }
-
-    };
-
-
-    const camara = {
-
-      facingMode: {
-        ideal: "environment"
-      },
-
-      width: {
-        ideal: 1280
-      },
-
-      height: {
-        ideal: 720
-      }
-
-    };
-
-
-    await lector.start(
-
-      camara,
-
-      configuracion,
-
-      qrDetectado,
-
-      qrNoDetectado
-
-    );
-
-
-    funcionando = true;
-
+    btnIniciar.disabled = true;
 
     estado.textContent =
-      "🟢 CÁMARA ACTIVA – ACERQUE EL QR";
+      "ABRIENDO CÁMARA...";
 
     estado.className =
-      "azul";
+      "amarillo";
 
+    diagCamara.textContent =
+      "solicitando cámara";
 
-    diagEstado.textContent =
-      "cámara activa / buscando QR";
+    try {
 
+      lector =
+        new Html5Qrcode("reader");
 
-    btnIniciar.style.display =
-      "none";
+      const configuracion = {
 
-    btnDetener.style.display =
-      "block";
+        fps: 10,
 
+        qrbox: function(
+          viewfinderWidth,
+          viewfinderHeight
+        ) {
 
-  }
-  catch(error) {
+          const lado =
+            Math.floor(
+              Math.min(
+                viewfinderWidth,
+                viewfinderHeight
+              ) * 0.80
+            );
 
-    console.error(error);
+          return {
+            width: lado,
+            height: lado
+          };
 
-    funcionando = false;
+        }
 
+      };
 
-    estado.textContent =
-      "ERROR DE CÁMARA";
+      await lector.start(
 
-    estado.className =
-      "rojo";
+        {
+          facingMode: "environment"
+        },
 
+        configuracion,
 
-    diagEstado.textContent =
-      error && error.message
-      ? error.message
-      : String(error);
+        qrDetectado,
 
-  }
+        qrNoDetectado
 
-}
+      );
 
+      funcionando = true;
 
+      estado.textContent =
+        "🟢 CÁMARA ACTIVA – ACERQUE EL QR";
 
-function qrNoDetectado(error) {
+      estado.className =
+        "azul";
 
-  /*
-    Es normal que esta función se ejecute
-    continuamente mientras no haya
-    un QR delante de la cámara.
+      diagCamara.textContent =
+        "activa / buscando QR";
 
-    No reproducimos sonidos aquí.
-  */
+      btnIniciar.style.display =
+        "none";
 
-}
+      btnDetener.style.display =
+        "block";
 
+    }
+    catch(error) {
 
+      console.error(error);
 
-function qrDetectado(
-  textoDecodificado,
-  resultadoDecodificado
-) {
+      funcionando = false;
 
-  if (bloqueado) {
-    return;
-  }
+      btnIniciar.disabled = false;
 
+      estado.textContent =
+        "ERROR DE CÁMARA";
 
-  bloqueado = true;
+      estado.className =
+        "rojo";
 
-
-  cantidadLecturas++;
-
-  contador.textContent =
-    cantidadLecturas;
-
-
-  const texto =
-    String(textoDecodificado).trim();
-
-
-  ultimo.textContent =
-    texto;
-
-
-  const idPAD =
-    obtenerIdPAD(texto);
-
-
-  codigo.textContent =
-    idPAD;
-
-
-  resultado.className =
-    "verde";
-
-
-  estado.textContent =
-    "✅ QR DETECTADO";
-
-  estado.className =
-    "verde";
-
-
-  diagEstado.textContent =
-    "QR leído correctamente";
-
-
-  beep();
-
-
-  if (navigator.vibrate) {
-
-    navigator.vibrate(150);
-
-  }
-
-
-  setTimeout(function() {
-
-    resultado.className = "";
-
-
-    codigo.textContent =
-      "---";
-
-
-    estado.textContent =
-      "🟢 CÁMARA ACTIVA – ACERQUE EL SIGUIENTE QR";
-
-    estado.className =
-      "azul";
-
-
-    diagEstado.textContent =
-      "cámara activa / buscando QR";
-
-
-    bloqueado = false;
-
-  }, 2500);
-
-}
-
-
-
-function obtenerIdPAD(texto) {
-
-  try {
-
-    const direccion =
-      new URL(texto);
-
-
-    const id =
-      direccion.searchParams.get("id");
-
-
-    if (id) {
-
-      return id
-        .trim()
-        .toUpperCase();
+      diagCamara.textContent =
+        error && error.message
+          ? error.message
+          : String(error);
 
     }
 
   }
-  catch(error) {
-
-    // El QR puede contener
-    // directamente el ID PAD.
-
-  }
 
 
-  return texto.toUpperCase();
+  function qrNoDetectado(error) {
 
-}
+    /*
+      No hacemos absolutamente nada.
 
-
-
-function beep() {
-
-  try {
-
-    const AudioContext =
-      window.AudioContext ||
-      window.webkitAudioContext;
-
-
-    const audio =
-      new AudioContext();
-
-
-    const oscilador =
-      audio.createOscillator();
-
-
-    const volumen =
-      audio.createGain();
-
-
-    oscilador.connect(volumen);
-
-    volumen.connect(
-      audio.destination
-    );
-
-
-    oscilador.frequency.value =
-      950;
-
-
-    volumen.gain.setValueAtTime(
-      0.25,
-      audio.currentTime
-    );
-
-
-    volumen.gain.exponentialRampToValueAtTime(
-      0.01,
-      audio.currentTime + 0.18
-    );
-
-
-    oscilador.start();
-
-
-    oscilador.stop(
-      audio.currentTime + 0.18
-    );
-
-  }
-  catch(error) {
-
-    console.log(
-      "Audio no disponible"
-    );
-
-  }
-
-}
-
-
-
-async function detenerCamara() {
-
-  if (!lector || !funcionando) {
-    return;
-  }
-
-
-  try {
-
-    await lector.stop();
-
-    await lector.clear();
-
-  }
-  catch(error) {
-
-    console.error(error);
+      Esta función se ejecuta muchas veces
+      mientras la cámara busca un QR.
+    */
 
   }
 
 
-  funcionando = false;
+  function qrDetectado(textoQR) {
+
+    if (bloqueado) {
+      return;
+    }
+
+    bloqueado = true;
+
+    cantidad++;
+
+    contador.textContent =
+      cantidad;
+
+    const texto =
+      String(textoQR).trim();
+
+    ultimaLectura.textContent =
+      texto;
+
+    const id =
+      extraerIdPAD(texto);
+
+    codigo.textContent =
+      id;
+
+    estado.textContent =
+      "✅ QR DETECTADO";
+
+    estado.className =
+      "verde";
+
+    resultado.className =
+      "verde";
+
+    hacerBeep();
+
+    if (navigator.vibrate) {
+      navigator.vibrate(150);
+    }
+
+    setTimeout(function() {
+
+      codigo.textContent =
+        "---";
+
+      estado.textContent =
+        "🟢 CÁMARA ACTIVA – ACERQUE EL SIGUIENTE QR";
+
+      estado.className =
+        "azul";
+
+      resultado.className =
+        "";
+
+      bloqueado =
+        false;
+
+    }, 2500);
+
+  }
 
 
-  estado.textContent =
-    "LECTOR DETENIDO";
+  function extraerIdPAD(texto) {
 
-  estado.className = "";
+    try {
+
+      const url =
+        new URL(texto);
+
+      const id =
+        url.searchParams.get("id");
+
+      if (id) {
+
+        return id
+          .trim()
+          .toUpperCase();
+
+      }
+
+    }
+    catch(error) {
+
+      // Si no es una URL,
+      // usamos directamente el contenido.
+
+    }
+
+    return texto.toUpperCase();
+
+  }
 
 
-  diagEstado.textContent =
-    "detenido";
+  function hacerBeep() {
+
+    try {
+
+      const AudioContext =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+      const contexto =
+        new AudioContext();
+
+      const oscilador =
+        contexto.createOscillator();
+
+      const volumen =
+        contexto.createGain();
+
+      oscilador.connect(volumen);
+
+      volumen.connect(
+        contexto.destination
+      );
+
+      oscilador.frequency.value =
+        900;
+
+      volumen.gain.setValueAtTime(
+        0.20,
+        contexto.currentTime
+      );
+
+      volumen.gain.exponentialRampToValueAtTime(
+        0.01,
+        contexto.currentTime + 0.15
+      );
+
+      oscilador.start(
+        contexto.currentTime
+      );
+
+      oscilador.stop(
+        contexto.currentTime + 0.15
+      );
+
+    }
+    catch(error) {
+
+      console.log(
+        "Beep no disponible"
+      );
+
+    }
+
+  }
 
 
-  btnIniciar.style.display =
-    "block";
+  async function detenerLector() {
 
-  btnDetener.style.display =
-    "none";
+    if (!lector || !funcionando) {
+      return;
+    }
 
-}
+    try {
+
+      await lector.stop();
+
+      lector.clear();
+
+    }
+    catch(error) {
+
+      console.error(error);
+
+    }
+
+    funcionando =
+      false;
+
+    bloqueado =
+      false;
+
+    estado.textContent =
+      "LECTOR DETENIDO";
+
+    estado.className =
+      "";
+
+    diagCamara.textContent =
+      "detenida";
+
+    btnIniciar.disabled =
+      false;
+
+    btnIniciar.style.display =
+      "block";
+
+    btnDetener.style.display =
+      "none";
+
+  }
 
 </script>
 
